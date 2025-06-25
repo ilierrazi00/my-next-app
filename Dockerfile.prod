@@ -1,0 +1,23 @@
+# Étape 1 : Récupération des dépendances
+FROM node:18-alpine AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Étape 2 : Build de l'application
+FROM deps AS builder
+COPY . .
+RUN npm run build
+
+# Étape 3 : Image de production standalone
+FROM node:18-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=1001:1001 /app/.next/standalone ./
+USER 1001
+EXPOSE 3000
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+CMD ["node", "server.js"]
