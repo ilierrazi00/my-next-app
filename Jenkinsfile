@@ -1,38 +1,41 @@
 pipeline {
-  agent any
+    agent any
 
-  stages {
-    stage('Checkout') {
-      steps {
-        git branch: 'main', url: 'https://github.com/ilierrazi00/my-next-app.git'
-      }
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/ilierrazi00/my-next-app.git'
+            }
+        }
+
+        stage('Install') {
+            steps {
+                bat 'npm install'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                bat 'npm run test'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                bat 'docker build -t my-next-app .'
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                bat 'docker run -d -p 3000:3000 my-next-app'
+            }
+        }
     }
 
-    stage('Install') {
-      steps {
-        sh 'npm ci'
-      }
+    post {
+        failure {
+            echo 'Échec du pipeline.'
+        }
     }
-
-    stage('Test') {
-      steps {
-        sh 'npm test'
-      }
-    }
-
-    stage('Build Docker Image') {
-      steps {
-        sh 'docker build -f Dockerfile.prod -t my-next-app-prod .'
-      }
-    }
-  }
-
-  post {
-    success {
-      echo 'Pipeline terminé avec succès !'
-    }
-    failure {
-      echo 'Échec du pipeline.'
-    }
-  }
 }
